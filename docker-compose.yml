@@ -1,0 +1,74 @@
+services:
+  php-apache:
+    build:
+      context: ./docker/php
+    container_name: symfony_web
+    env_file:
+      - ".env"
+    environment:
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:80" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Symfony-spotify:/var/www/html
+      - uploads-data:/var/www/html/public/uploads
+    restart: unless-stopped
+
+  # MariaDB
+  database:
+    image: mariadb:10.6
+    container_name: symfony_db
+    env_file:
+      - .env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  adminer:
+    image: adminer
+    container_name: symfony_adminer
+    restart: always
+    ports:
+      - "8085:8080"
+
+  backup:
+    image: mariadb:10.6
+    container_name: symfony_backup
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ./backups:/backups
+    command: >
+      bash -c "mkdir -p /backups && while true; do
+        sleep 30;
+        mariadb-dump -h database -u root -p$${DB_ROOT_PASSWORD} --all-databases > /backups/backup_auto.sql;
+        echo 'Sauvegarde effectuée dans backup_auto.sql';
+        sleep 3600;
+      done"
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  uploads-data:
