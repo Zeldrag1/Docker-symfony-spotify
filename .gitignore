@@ -1,0 +1,24 @@
+# --- IDE & Système ---
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# --- Docker & Environnement ---
+.env
+.env.local
+.env.*.local
+
+# --- Dossier de Backup ---
+/backup/*
+!/backup/.gitkeep
+
+# --- Symfony (Si jamais ils ne sont pas ignorés par défaut) ---
+/Symfony-spotify/vendor/
+/Symfony-spotify/var/
+/Symfony-spotify/public/bundles/
+/Symfony-spotify/public/build/
+
+# --- Uploads ---
+/Symfony-spotify/public/uploads/*
+!/Symfony-spotify/public/uploads/.gitignore
